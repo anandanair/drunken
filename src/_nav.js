@@ -8,6 +8,15 @@ export default {
       //   variant: 'info',
       //   text: 'NEW',
       // }
+    },
+    {
+      name: 'Administration',
+      url: '/admin',
+      icon: 'icon-setings',
+      // badge: {
+      //   variant: 'info',
+      //   text: 'NEW',
+      // }
     }
   ],
 };
