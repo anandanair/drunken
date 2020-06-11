@@ -11,21 +11,28 @@ class Dashboard extends Component {
     this.state = {
       pincode: null
     };
+
+    this.getUserInfo = this.getUserInfo.bind(this);
+
   }
 
-  componentDidMount(){
-    var ref = database.ref('/pinCode/pinCode_1').once('value').then(function(snapshot){
+  getUserInfo() {
+    console.log(firebase.auth().currentUser)
+  }
+
+  componentDidMount() {
+    var ref = database.ref('/pinCode/pinCode_1').once('value').then(function (snapshot) {
       console.log(snapshot.val())
     })
   }
-  
+
 
 
   render() {
 
     return (
       <div>
-        <div>{this.state.pincode}</div>
+        <Button onClick={this.getUserInfo}> Get User Info </Button>
       </div>
     )
   }
