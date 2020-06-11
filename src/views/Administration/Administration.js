@@ -115,12 +115,27 @@ class Administration extends Component {
             })
 
             //EMAIL CREATION
-            // firebase.auth().createUserWithEmailAndPassword(`${storeName}@drunken.com`, `${storeNumber}`).catch(function (error) {
-            //     // Handle Errors here.
-            //     var errorCode = error.code;
-            //     var errorMessage = error.message;
-            //     // ...
-            // });
+            firebase.auth().createUserWithEmailAndPassword(`${storeName}@drunken.com`, `${storeNumber}`)
+                .then((res) => {
+                    database.ref(`users/${firebase.auth().currentUser.uid}`).set({
+                        role: "consumer"
+                    })
+                    firebase.auth().signOut().then(() => {
+                        var email = localStorage.getItem('userEmail')
+                        var password = localStorage.getItem('userPassword')
+                        firebase.auth().signInWithEmailAndPassword(email, password).catch((error) => {
+                            console.log(error)
+                        })
+
+
+                    })
+                })
+                .catch(function (error) {
+                    // Handle Errors here.
+                    var errorCode = error.code;
+                    var errorMessage = error.message;
+                    // ...
+                });
         })
     }
 

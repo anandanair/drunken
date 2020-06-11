@@ -6,6 +6,7 @@ import PropTypes from 'prop-types';
 import { AppAsideToggler, AppNavbarBrand, AppSidebarToggler } from '@coreui/react';
 import logo from '../../assets/img/brand/logo.svg'
 import sygnet from '../../assets/img/brand/sygnet.svg'
+import firebase from '../../firebase';
 
 const propTypes = {
   children: PropTypes.node,
@@ -14,6 +15,18 @@ const propTypes = {
 const defaultProps = {};
 
 class DefaultHeader extends Component {
+
+  signout() {
+    firebase.auth().signOut()
+      .then(() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('tokens');
+        window.location.reload()
+      })
+    console.log("signout")
+  }
+
   render() {
 
     // eslint-disable-next-line
@@ -46,8 +59,11 @@ class DefaultHeader extends Component {
           <NavItem className="d-md-down-none">
             <NavLink to="#" className="nav-link"><i className="icon-location-pin"></i></NavLink>
           </NavItem>
+          <NavItem className="d-md-down-none">
+            <NavLink onClick={this.signout} to="#" className="nav-link"><i className="icon-logout">Sign Out</i></NavLink>
+          </NavItem>&nbsp;&nbsp;&nbsp;
         </Nav>
-       
+
       </React.Fragment>
     );
   }

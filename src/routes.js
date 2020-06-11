@@ -8,7 +8,7 @@ const routes = [
   { path: '/', exact: true, name: 'Home' },
   { path: '/dashboard', name: 'Dashboard', component: Dashboard },
   { path: '/admin', name: 'Administration', component: Administration },
-  { path: '/login', name: 'Administration', component: Login },
+  { path: '/login', name: 'Login', component: Login },
 ];
 
 export default routes;

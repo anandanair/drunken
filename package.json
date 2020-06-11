@@ -20,12 +20,14 @@
     "bootstrap": "^4.5.0",
     "chart.js": "^2.9.3",
     "classnames": "^2.2.6",
+    "cookie": "^0.4.1",
     "core-js": "^3.6.5",
     "enzyme": "^3.11.0",
     "enzyme-adapter-react-16": "^1.15.2",
     "firebase": "^7.15.0",
     "flag-icon-css": "^3.4.6",
     "font-awesome": "^4.7.0",
+    "jwt-decode": "^2.2.0",
     "node-sass": "^4.14.1",
     "prop-types": "^15.7.2",
     "react": "^16.13.1",
@@ -36,7 +38,8 @@
     "react-router-dom": "^5.2.0",
     "react-test-renderer": "^16.13.1",
     "reactstrap": "^8.4.1",
-    "simple-line-icons": "^2.4.1"
+    "simple-line-icons": "^2.4.1",
+    "universal-cookie": "^4.0.3"
   },
   "devDependencies": {
     "react-scripts": "^3.4.1"
