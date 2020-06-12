@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, Card, CardBody, CustomInput, Jumbotron, Modal, ModalBody, ModalHeader, ModalFooter, Form, FormGroup, Input, Label, CardHeader, CardDeck, CardImg, CardTitle, CardSubtitle } from 'reactstrap';
+import { Button, Card, CardBody, CustomInput, Jumbotron, Modal, ModalBody, ModalHeader, ModalFooter, Form, FormGroup, Input, Label, CardHeader, CardDeck, CardImg, CardTitle, CardSubtitle, Collapse, Fade, CardFooter } from 'reactstrap';
 import firebase from '../../firebase';
 
 const database = firebase.database()
@@ -18,12 +18,17 @@ class Consumer extends Component {
             shopId: null,
             drinks: [],
             showDrinks: false,
+            loading: true,
+            showSearch: false,
+            allDrinks: []
         };
 
         this.toggle = this.toggle.bind(this);
         this.handleChange = this.handleChange.bind(this);
         this.handleFile = this.handleFile.bind(this);
         this.addNewDrink = this.addNewDrink.bind(this);
+        this.showDrinks = this.showDrinks.bind(this);
+        this.showSearch = this.showSearch.bind(this);
 
 
 
@@ -31,51 +36,29 @@ class Consumer extends Component {
 
 
     componentDidMount() {
+        this.setState({ loading: true })
         firebase.auth().onAuthStateChanged(currentUser => {
-            database.ref(`users/${currentUser.uid}`).once('value').then((snapshot) => {
-                var shopId = snapshot.val().shopId
-                this.setState({ shopId: shopId })
-                database.ref(`shops/${shopId}`).once('value').then((snapshot) => {
-                    var obj = snapshot.val()
-                    firebase.storage().ref(`shopCover/${shopId}`).getDownloadURL().then((url) => {
-                        obj.coverImage = url
-                        this.setState({
-                            shopDetails: obj
+            database.ref(`users/${currentUser.uid}`).once('value')
+                .then((snapshot) => {
+                    var shopId = snapshot.val().shopId
+                    this.setState({ shopId: shopId })
+                    database.ref(`shops/${shopId}`).once('value')
+                        .then((snapshot) => {
+                            var obj = snapshot.val()
+                            firebase.storage().ref(`shopCover/${shopId}`).getDownloadURL()
+                                .then((url) => {
+                                    obj.coverImage = url
+                                    this.setState({
+                                        shopDetails: obj,
+                                        loading: false
+                                    })
+                                })
                         })
-                    })
-
                 })
-                // database.ref(`shops/${shopId}/drinks`).once('value').then((snapshot) => {
-                //     console.log(snapshot.val())
-                // })
-                var drinksArray = []
-                database.ref(`shops/${shopId}/drinks`).once('value', function (snapshot) {
-                    snapshot.forEach(function (childSnapshot) {
-                        var drinkObj = {}
-                        drinkObj.childKey = childSnapshot.key;
-                        drinkObj.childData = childSnapshot.val();
-                        firebase.storage().ref(`drinksImages/${childSnapshot.key}`).getDownloadURL().then((url) => {
-                            drinkObj.coverImage = url
-                            drinksArray.push(drinkObj)
-                        })
-                    });
-                }).then(() => {
-                    console.log(drinksArray)
-                    this.setState({
-                        drinks: drinksArray
-                    }, () => {
-                        this.setState({
-                            showDrinks: true
-                        })
-                    })
-                })
-            })
-
         })
-
-
-
     }
+
+
 
     toggle() {
         this.setState({ showModal: !this.state.showModal })
@@ -116,94 +99,206 @@ class Consumer extends Component {
     addNewDrink() {
         const { drinkName, drinkDesc, drinkPrice, fileb64String, shopId } = this.state
 
-        var newKey = database.ref(`shops/${shopId}/drinks`).push({
+        database.ref(`shops/${shopId}/drinks/${drinkName}`).set({
             name: drinkName,
             description: drinkDesc,
             price: drinkPrice
-        }).key
-        database.ref(`drinks/${drinkName}`).set({
-            name: drinkName,
-            description: drinkDesc,
-            price: drinkPrice,
-            imageId: newKey
         })
 
-        firebase.storage().ref(`drinksImages/${newKey}`).putString(fileb64String, 'data_url').then(function (snapshot) {
-            console.log('Uploaded a data_url string!');
+        firebase.storage().ref(`drinksImages/${drinkName}`).putString(fileb64String, 'data_url')
+            .then(function (snapshot) {
+                console.log(snapshot)
+                firebase.storage().ref(`drinksImages/${drinkName}`).getDownloadURL().then((url) => {
+                    database.ref(`shops/${shopId}/drinks/${drinkName}`).update({
+                        imageUrl: url
+                    })
+                    database.ref(`drinks/${drinkName}`).set({
+                        name: drinkName,
+                        description: drinkDesc,
+                        price: drinkPrice,
+                        imageUrl: url
+                    })
+
+                })
+            })
+    }
+
+    getDrinks(cb) {
+        var drinksArray = []
+        database.ref(`shops/${this.state.shopId}/drinks`).once('value', function (snapshot) {
+            snapshot.forEach(function (childSnapshot) {
+                var childData = childSnapshot.val();
+                childData.childKey = childSnapshot.key;
+                childData.img = "test"
+                firebase.storage().ref(`drinksImages/${childSnapshot.key}`).getDownloadURL().then((url) => {
+                    childData.img = url
+                    console.log(url)
+                })
+                drinksArray.push(childData)
+            });
+            console.log(drinksArray)
+            cb(drinksArray)
+        })
+    }
+
+    showDrinks() {
+        this.getDrinks(cb => {
+            console.log(cb)
+            this.setState({
+                drinks: cb,
+                showDrinks: !this.state.showDrinks
+            })
+        })
+    }
+
+    showSearch() {
+        this.getAllDrinks()
+        this.setState({
+            showSearch: true
+        })
+    }
+
+    getAllDrinks() {
+        var { shopId } = this.state
+        database.ref(`drinks`).once('value', (snapshot) => {
+            snapshot.forEach((childSnapshot) => {
+                var childData = childSnapshot.val()
+                var childKey = childSnapshot.key
+                database.ref(`shops/${shopId}/drinks/${childKey}`).once('value').then((snap) => {
+                    var exist = snap.exists()
+                    console.log(exist)
+                    if (!exist) {
+                        this.setState(state => {
+                            const allDrinks = this.state.allDrinks.concat(childData)
+                            return {
+                                allDrinks
+                            }
+                        })
+                    }
+                })
+
+
+
+
+
+            })
         })
     }
 
 
 
     render() {
-        const { shopDetails, showModal, drinks, showDrinks } = this.state
+        const { shopDetails, showModal, shopId, loading, drinks, showDrinks, showSearch, allDrinks } = this.state
         return (
             <div>
-                {shopDetails ?
-                    <div>
-                        {/* <Jumbotron>
+                {!showSearch ?
+                    !loading ?
+                        <Fade>
+                            {/* <Jumbotron>
                             <img src={shopDetails.coverImage} class="img-fluid" alt="Responsive image" />
                         </Jumbotron> */}
-                        <Card>
-                            <CardBody>
+                            <Card>
+                                <CardBody>
+                                    <Jumbotron>
+                                        <h1 className="display-3">Welcome to {shopDetails.name}</h1>
+                                        <p className="lead">This is a simple hero unit, a simple Jumbotron-style component for calling extra attention to featured content or information.</p>
+                                        <hr className="my-2" />
+                                        <p>It uses utility classes for typography and spacing to space content out within the larger container.</p>
+                                        <p className="lead">
+                                        </p>
+                                        <Button onClick={this.toggle} block >Add Drinks</Button>
+                                        <Button onClick={this.showSearch} block >Search Drinks</Button>
+                                    </Jumbotron>
+                                </CardBody>
+                            </Card>
+
+                            {/* <Card> */}
+                            {/* <CardBody> */}
+                            <Button onClick={this.showDrinks} block >Show all Drinks</Button>
+
+                            {/* </CardBody> */}
+                            {/* </Card> */}
+
+                            <Collapse isOpen={showDrinks} >
                                 <Jumbotron>
-                                    <h1 className="display-3">Welcome to {shopDetails.name}</h1>
-                                    <p className="lead">This is a simple hero unit, a simple Jumbotron-style component for calling extra attention to featured content or information.</p>
-                                    <hr className="my-2" />
-                                    <p>It uses utility classes for typography and spacing to space content out within the larger container.</p>
-                                    <p className="lead">
-                                    </p>
-                                    <Button onClick={this.toggle} block >Add Drinks</Button>
+                                    <CardDeck>
+                                        {drinks.map(drink => (
+                                            <Card key={drink.childKey}>
+                                                <CardImg top width="100%" src={drink.imageUrl} alt="Card image cap" />
+                                                <CardBody>
+                                                    <CardTitle> {drink.name} </CardTitle>
+                                                    <CardSubtitle> {drink.description} </CardSubtitle>
+                                                    <CardSubtitle>Price: {drink.price} </CardSubtitle>
+
+                                                </CardBody>
+                                            </Card>
+                                        ))}
+                                    </CardDeck>
                                 </Jumbotron>
-                            </CardBody>
-                        </Card>
-                        {showDrinks ?
-                            <CardDeck>
-                                {drinks.map(drink => (
-                                    <Card key={drink.childKey}>
-                                        <CardImg top width="100%" src={drink.coverImage} alt="Card image cap" />
-                                        <CardBody>
-                                            <CardTitle> {drink.childData.name} </CardTitle>
-                                            <CardSubtitle> {drink.childData.description} </CardSubtitle>
-                                            <CardSubtitle>Price: {drink.childData.price} </CardSubtitle>
+                            </Collapse>
 
-                                        </CardBody>
-                                    </Card>
-                                ))}
-                            </CardDeck>
-                            : <div>Loading</div>
-                        }
+                            <Modal isOpen={showModal} >
+                                <ModalHeader>Modal title</ModalHeader>
+                                <ModalBody>
+                                    <Form>
+                                        <FormGroup>
+                                            <Label>Drink Name</Label>
+                                            <Input onChange={this.handleChange("drinkName")} type="text"></Input>
+                                        </FormGroup>
+                                        <FormGroup>
+                                            <Label>Description</Label>
+                                            <Input onChange={this.handleChange("drinkDesc")} type="text"></Input>
+                                        </FormGroup>
+                                        <FormGroup>
+                                            <Label>Price</Label>
+                                            <Input onChange={this.handleChange("drinkPrice")} type="text"></Input>
+                                        </FormGroup>
+                                        <FormGroup>
+                                            <Label for="exampleCustomFileBrowser">Upload Image for Shop</Label>
+                                            <CustomInput accept="jpg, jpeg, png" type="file" onChange={this.handleFile} id="exampleCustomFileBrowser" name="customFile" />
+                                        </FormGroup>
+                                    </Form>
+                                </ModalBody>
+                                <ModalFooter>
+                                    <Button color="primary" onClick={this.addNewDrink}>Do Something</Button>{' '}
+                                    <Button color="secondary" onClick={this.toggle}>Cancel</Button>
+                                </ModalFooter>
+                            </Modal>
 
-                        <Modal isOpen={showModal} >
-                            <ModalHeader>Modal title</ModalHeader>
-                            <ModalBody>
-                                <Form>
-                                    <FormGroup>
-                                        <Label>Drink Name</Label>
-                                        <Input onChange={this.handleChange("drinkName")} type="text"></Input>
-                                    </FormGroup>
-                                    <FormGroup>
-                                        <Label>Description</Label>
-                                        <Input onChange={this.handleChange("drinkDesc")} type="text"></Input>
-                                    </FormGroup>
-                                    <FormGroup>
-                                        <Label>Price</Label>
-                                        <Input onChange={this.handleChange("drinkPrice")} type="text"></Input>
-                                    </FormGroup>
-                                    <FormGroup>
-                                        <Label for="exampleCustomFileBrowser">Upload Image for Shop</Label>
-                                        <CustomInput accept="jpg, jpeg, png" type="file" onChange={this.handleFile} id="exampleCustomFileBrowser" name="customFile" />
-                                    </FormGroup>
-                                </Form>
-                            </ModalBody>
-                            <ModalFooter>
-                                <Button color="primary" onClick={this.addNewDrink}>Do Something</Button>{' '}
-                                <Button color="secondary" onClick={this.toggle}>Cancel</Button>
-                            </ModalFooter>
-                        </Modal>
+                        </Fade>
+                        : <div>Loading</div>
 
-                    </div>
-                    : <div>Loading</div>
+                    : <Fade>
+                        <div>
+                            <Card>
+                                <CardBody>
+                                    <Jumbotron>
+                                        <h3>Search for drinks</h3>
+                                        <Input type="text" ></Input>
+                                    </Jumbotron>
+                                </CardBody>
+                            </Card>
+                            <Card>
+                                <CardBody>
+                                    <CardDeck>
+                                        {allDrinks.map((drink, index) => (
+                                            <Card key={index} >
+                                                <CardImg top width="100%" src={drink.imageUrl} alt="Card image cap" />
+                                                <CardBody>
+                                                    <CardTitle> {drink.name} </CardTitle>
+                                                    <CardSubtitle> {drink.description} </CardSubtitle>
+                                                    <CardSubtitle> {drink.price} </CardSubtitle>
+                                                </CardBody>
+                                                <CardFooter>
+                                                    <Button> Add </Button>
+                                                </CardFooter>
+                                            </Card>
+                                        ))}
+                                    </CardDeck>
+                                </CardBody>
+                            </Card>
+                        </div>
+                    </Fade>
                 }
             </div>
         )

@@ -144,7 +144,7 @@ class Administration extends Component {
                 // console.log(result)
                 this.setState({ fileb64String: result })
                 console.log(result)
-                
+
 
             })
         }
@@ -178,13 +178,6 @@ class Administration extends Component {
                         state: 'open'
                     })
 
-                    firebase.storage().ref(`shopCover/shop${id}`).putString(fileb64String, 'data_url').then(function (snapshot) {
-                        console.log('Uploaded a data_url string!');
-                    })
-                    .catch((error)=>{
-                        console.log(error)
-                    })
-
                     //EMAIL CREATION
                     firebase.auth().createUserWithEmailAndPassword(`${storeName}@drunken.com`, `${storeNumber}`)
                         .then((res) => {
@@ -197,7 +190,13 @@ class Administration extends Component {
                                 var password = localStorage.getItem('userPassword')
                                 firebase.auth().signInWithEmailAndPassword(email, password)
                                     .then(() => {
-                                        window.location.reload();
+                                        firebase.storage().ref(`shopCover/shop${id}`).putString(fileb64String, 'data_url').then(function (snapshot) {
+                                            console.log('Uploaded a data_url string!');
+                                            window.location.reload(); 
+                                        })
+                                            .catch((error) => {
+                                                console.log(error)
+                                            })
                                     })
                                     .catch((error) => {
                                         console.log(error)
