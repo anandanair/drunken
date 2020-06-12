@@ -28,6 +28,7 @@ class Consumer extends Component {
         this.handleFile = this.handleFile.bind(this);
         this.addNewDrink = this.addNewDrink.bind(this);
         this.showDrinks = this.showDrinks.bind(this);
+        this.addExistingDrink = this.addExistingDrink.bind(this);
         this.showSearch = this.showSearch.bind(this);
 
 
@@ -176,15 +177,20 @@ class Consumer extends Component {
                         })
                     }
                 })
-
-
-
-
-
             })
         })
     }
 
+    addExistingDrink(name, description, price, imageUrl) {
+        var { shopId } = this.state
+        database.ref(`shops/${shopId}/drinks/${name}`).set({
+            name: name,
+            description: description,
+            price: price,
+            imageUrl: imageUrl
+        })
+        window.location.reload()
+    }
 
 
     render() {
@@ -290,7 +296,7 @@ class Consumer extends Component {
                                                     <CardSubtitle> {drink.price} </CardSubtitle>
                                                 </CardBody>
                                                 <CardFooter>
-                                                    <Button> Add </Button>
+                                                    <Button onClick={() => this.addExistingDrink(drink.name, drink.description, drink.price, drink.imageUrl)} > Add </Button>
                                                 </CardFooter>
                                             </Card>
                                         ))}
