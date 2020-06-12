@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, Card, CardBody, CustomInput, Jumbotron, Modal, ModalBody, ModalHeader, ModalFooter, Form, FormGroup, Input, Label, CardHeader, CardDeck, CardImg, CardTitle, CardSubtitle, Collapse, Fade, CardFooter, Toast, ToastBody, ToastHeader, Badge, Col, Row } from 'reactstrap';
+import { Button, Card, CardBody, CustomInput, Jumbotron, Modal, ModalBody, ModalHeader, ModalFooter, Form, FormGroup, Input, Label, CardHeader, CardDeck, CardImg, CardTitle, CardSubtitle, Collapse, Fade, CardFooter, Toast, ToastBody, ToastHeader, Badge, Col, Row, CardColumns } from 'reactstrap';
 import firebase from '../../firebase';
 
 const database = firebase.database()
@@ -196,13 +196,24 @@ class Consumer extends Component {
             price: price,
             imageUrl: imageUrl
         })
-        window.location.reload()
+        this.getDrinks((cb) => {
+            this.setState({
+                drinks: cb,
+                showSearch: false,
+                allDrinks: []
+            })
+        })
+
     }
 
     deleteDrink(name) {
         var { shopId } = this.state
         database.ref(`shops/${shopId}/drinks/${name}`).remove().then(() => {
-            window.location.reload()
+            this.getDrinks((cb) => {
+                this.setState({
+                    drinks: cb
+                })
+            })
         })
     }
 
@@ -263,9 +274,10 @@ class Consumer extends Component {
 
                             <Collapse isOpen={showDrinks} >
                                 <Jumbotron>
-                                    <CardDeck>
+                                    <CardColumns>
                                         {drinks.map(drink => (
                                             <Card key={drink.childKey}>
+                                                <CardHeader> {drink.name} </CardHeader>
                                                 <CardImg top width="100%" src={drink.imageUrl} alt="Card image cap" />
                                                 <CardBody>
 
@@ -311,7 +323,7 @@ class Consumer extends Component {
                                                 </CardFooter>
                                             </Card>
                                         ))}
-                                    </CardDeck>
+                                    </CardColumns>
                                 </Jumbotron>
                             </Collapse>
 
@@ -378,21 +390,26 @@ class Consumer extends Component {
                             </Card>
                             <Card>
                                 <CardBody>
-                                    <CardDeck>
+                                    <CardColumns>
                                         {allDrinks.map((drink, index) => (
                                             <Card key={index} >
+                                                <CardHeader> {drink.name} </CardHeader>
                                                 <CardImg top width="100%" src={drink.imageUrl} alt="Card image cap" />
                                                 <CardBody>
-                                                    <CardTitle> {drink.name} </CardTitle>
-                                                    <CardSubtitle> {drink.description} </CardSubtitle>
-                                                    <CardSubtitle> {drink.price} </CardSubtitle>
+                                                    <Toast>
+                                                        <ToastHeader> {drink.name} </ToastHeader>
+                                                        <ToastBody>
+                                                            <CardSubtitle> {drink.description} </CardSubtitle>
+                                                            <CardSubtitle> {drink.price} </CardSubtitle>
+                                                        </ToastBody>
+                                                    </Toast>
                                                 </CardBody>
                                                 <CardFooter>
-                                                    <Button onClick={() => this.addExistingDrink(drink.name, drink.description, drink.price, drink.imageUrl)} > Add </Button>
+                                                    <Button color="success" onClick={() => this.addExistingDrink(drink.name, drink.description, drink.price, drink.imageUrl)} > Add </Button>
                                                 </CardFooter>
                                             </Card>
                                         ))}
-                                    </CardDeck>
+                                    </CardColumns>
                                 </CardBody>
                             </Card>
                         </div>
