@@ -17,6 +17,15 @@ export default {
       //   variant: 'info',
       //   text: 'NEW',
       // }
+    },
+    {
+      name: 'Consumer',
+      url: '/consumer',
+      icon: 'icon-add',
+      // badge: {
+      //   variant: 'info',
+      //   text: 'NEW',
+      // }
     }
   ],
 };
