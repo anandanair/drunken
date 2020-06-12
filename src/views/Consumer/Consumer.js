@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, Card, CardBody, CustomInput, Jumbotron, Modal, ModalBody, ModalHeader, ModalFooter, Form, FormGroup, Input, Label, CardHeader, CardDeck, CardImg, CardTitle, CardSubtitle, Collapse, Fade, CardFooter } from 'reactstrap';
+import { Button, Card, CardBody, CustomInput, Jumbotron, Modal, ModalBody, ModalHeader, ModalFooter, Form, FormGroup, Input, Label, CardHeader, CardDeck, CardImg, CardTitle, CardSubtitle, Collapse, Fade, CardFooter, Toast, ToastBody, ToastHeader, Badge, Col, Row } from 'reactstrap';
 import firebase from '../../firebase';
 
 const database = firebase.database()
@@ -20,7 +20,11 @@ class Consumer extends Component {
             showDrinks: false,
             loading: true,
             showSearch: false,
-            allDrinks: []
+            allDrinks: [],
+            showUpdate: false,
+            currentDrink: null,
+            updatePrice: null,
+            updateStock: null,
         };
 
         this.toggle = this.toggle.bind(this);
@@ -30,6 +34,9 @@ class Consumer extends Component {
         this.showDrinks = this.showDrinks.bind(this);
         this.addExistingDrink = this.addExistingDrink.bind(this);
         this.showSearch = this.showSearch.bind(this);
+        this.deleteDrink = this.deleteDrink.bind(this);
+        this.showUpdate = this.showUpdate.bind(this);
+        this.updateDrink = this.updateDrink.bind(this);
 
 
 
@@ -192,9 +199,38 @@ class Consumer extends Component {
         window.location.reload()
     }
 
+    deleteDrink(name) {
+        var { shopId } = this.state
+        database.ref(`shops/${shopId}/drinks/${name}`).remove().then(() => {
+            window.location.reload()
+        })
+    }
+
+    showUpdate(name) {
+        this.setState({
+            currentDrink: name,
+            showUpdate: !this.state.showUpdate
+        })
+    }
+
+    updateDrink() {
+        var { currentDrink, updatePrice, updateStock, shopId } = this.state
+        console.log(currentDrink)
+        database.ref(`shops/${shopId}/drinks/${currentDrink}`).update({
+            price: updatePrice,
+            stock: updateStock
+        }).then(() => {
+            this.setState({
+                showUpdate: false,
+                showDrinks: false
+            })
+            // window.location.reload()
+        })
+    }
+
 
     render() {
-        const { shopDetails, showModal, shopId, loading, drinks, showDrinks, showSearch, allDrinks } = this.state
+        const { shopDetails, showModal, shopId, loading, drinks, showDrinks, showSearch, allDrinks, showUpdate, currentDrink } = this.state
         return (
             <div>
                 {!showSearch ?
@@ -232,16 +268,72 @@ class Consumer extends Component {
                                             <Card key={drink.childKey}>
                                                 <CardImg top width="100%" src={drink.imageUrl} alt="Card image cap" />
                                                 <CardBody>
-                                                    <CardTitle> {drink.name} </CardTitle>
-                                                    <CardSubtitle> {drink.description} </CardSubtitle>
-                                                    <CardSubtitle>Price: {drink.price} </CardSubtitle>
+
+
+                                                    <Toast>
+                                                        <ToastHeader> {drink.name} </ToastHeader>
+                                                        <ToastBody>
+                                                            {/* <CardTitle> {drink.name} </CardTitle> */}
+                                                            <CardSubtitle> {drink.description} </CardSubtitle>
+                                                            <CardSubtitle>Price: {drink.price} </CardSubtitle>
+                                                        </ToastBody>
+                                                    </Toast>
+                                                    <Toast>
+                                                        <ToastHeader>
+                                                            <Row>
+                                                                <Col>
+                                                                    Stock
+                                                            </Col>
+                                                                <Col>
+                                                                    {drink.stock ?
+                                                                        drink.stock < 20 ? <Badge color="warning" > Stock running low </Badge>
+                                                                            : <Badge color="success">in Stock</Badge>
+                                                                        : <Badge color="danger">Out of Stock</Badge>
+                                                                    }
+                                                                </Col>
+                                                            </Row>
+
+
+                                                        </ToastHeader>
+                                                        <ToastBody> {drink.stock ? drink.stock : 'Not yet updated'} </ToastBody>
+                                                    </Toast>
 
                                                 </CardBody>
+                                                <CardFooter>
+                                                    <Row>
+                                                        <Col>
+                                                            <Button onClick={() => { this.deleteDrink(drink.name) }} color="danger">Delete</Button>
+                                                        </Col>
+                                                        <Col>
+                                                            <Button onClick={() => { this.showUpdate(drink.name) }} color="primary">Update</Button>
+                                                        </Col>
+                                                    </Row>
+                                                </CardFooter>
                                             </Card>
                                         ))}
                                     </CardDeck>
                                 </Jumbotron>
                             </Collapse>
+
+                            <Modal isOpen={showUpdate}>
+                                <ModalHeader>Update Details for {currentDrink} </ModalHeader>
+                                <ModalBody>
+                                    <Form>
+                                        <FormGroup>
+                                            <Label>Price</Label>
+                                            <Input onChange={this.handleChange("updatePrice")} type="number"></Input>
+                                        </FormGroup>
+                                        <FormGroup>
+                                            <Label>Stock</Label>
+                                            <Input onChange={this.handleChange("updateStock")} type="number"></Input>
+                                        </FormGroup>
+                                    </Form>
+                                </ModalBody>
+                                <ModalFooter>
+                                    <Button onClick={this.updateDrink}>Update</Button>
+                                    <Button onClick={() => { this.showUpdate(null) }}>Close</Button>
+                                </ModalFooter>
+                            </Modal>
 
                             <Modal isOpen={showModal} >
                                 <ModalHeader>Modal title</ModalHeader>
