@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, Card, CardBody, CustomInput, Jumbotron, Modal, ModalBody, ModalHeader, ModalFooter, Form, FormGroup, Input, Label } from 'reactstrap';
+import { Button, Card, CardBody, CustomInput, Jumbotron, Modal, ModalBody, ModalHeader, ModalFooter, Form, FormGroup, Input, Label, CardHeader, CardDeck, CardImg, CardTitle, CardSubtitle } from 'reactstrap';
 import firebase from '../../firebase';
 
 const database = firebase.database()
@@ -15,7 +15,9 @@ class Consumer extends Component {
             drinkName: null,
             drinkPrice: null,
             drinkDesc: null,
-            shopId: null
+            shopId: null,
+            drinks: [],
+            showDrinks: false,
         };
 
         this.toggle = this.toggle.bind(this);
@@ -43,8 +45,29 @@ class Consumer extends Component {
                     })
 
                 })
-                database.ref(`shops/${shopId}/drinks`).once('value').then((snapshot) => {
-                    console.log(snapshot.val())
+                // database.ref(`shops/${shopId}/drinks`).once('value').then((snapshot) => {
+                //     console.log(snapshot.val())
+                // })
+                var drinksArray = []
+                database.ref(`shops/${shopId}/drinks`).once('value', function (snapshot) {
+                    snapshot.forEach(function (childSnapshot) {
+                        var drinkObj = {}
+                        drinkObj.childKey = childSnapshot.key;
+                        drinkObj.childData = childSnapshot.val();
+                        firebase.storage().ref(`drinksImages/${childSnapshot.key}`).getDownloadURL().then((url) => {
+                            drinkObj.coverImage = url
+                            drinksArray.push(drinkObj)
+                        })
+                    });
+                }).then(() => {
+                    console.log(drinksArray)
+                    this.setState({
+                        drinks: drinksArray
+                    }, () => {
+                        this.setState({
+                            showDrinks: true
+                        })
+                    })
                 })
             })
 
@@ -113,7 +136,7 @@ class Consumer extends Component {
 
 
     render() {
-        const { shopDetails, showModal } = this.state
+        const { shopDetails, showModal, drinks, showDrinks } = this.state
         return (
             <div>
                 {shopDetails ?
@@ -134,6 +157,23 @@ class Consumer extends Component {
                                 </Jumbotron>
                             </CardBody>
                         </Card>
+                        {showDrinks ?
+                            <CardDeck>
+                                {drinks.map(drink => (
+                                    <Card key={drink.childKey}>
+                                        <CardImg top width="100%" src={drink.coverImage} alt="Card image cap" />
+                                        <CardBody>
+                                            <CardTitle> {drink.childData.name} </CardTitle>
+                                            <CardSubtitle> {drink.childData.description} </CardSubtitle>
+                                            <CardSubtitle>Price: {drink.childData.price} </CardSubtitle>
+
+                                        </CardBody>
+                                    </Card>
+                                ))}
+                            </CardDeck>
+                            : <div>Loading</div>
+                        }
+
                         <Modal isOpen={showModal} >
                             <ModalHeader>Modal title</ModalHeader>
                             <ModalBody>
