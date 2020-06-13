@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import firebase from 'firebase'
 import style from './style.css'
+import { Jumbotron } from 'reactstrap';
 
 const database = firebase.database()
 
@@ -40,8 +41,11 @@ class ShopDetails extends Component {
     var { shopData } = this.state
     return (
       <div>
-        <img src={shopData.imageUrl} />
-      </div>
+        <Jumbotron>
+        <img src={shopData.imageUrl} className="img-fluid" alt="Responsive image"/>
+        
+        </Jumbotron>
+        </div>
     )
   }
 }
