@@ -143,22 +143,20 @@ class Consumer extends Component {
 
         firebase.storage().ref(`drinksImages/${drinkName}`).putString(fileb64String, 'data_url')
             .then((snapshot) => {
-                setTimeout(() => {
-                    console.log(`${drinkName}_400x400`)
-                    firebase.storage().ref(`drinksImages/${drinkName}`).getDownloadURL()
-                        .then((url) => {
-                            database.ref(`shops/${shopId}/drinks/${drinkName}`).update({
-                                imageUrl: url
-                            })
-                            database.ref(`drinks/${drinkName}`).set({
-                                name: drinkName,
-                                description: drinkDesc,
-                                price: drinkPrice,
-                                imageUrl: url
-                            })
-
+                firebase.storage().ref(`drinksImages/${drinkName}`).getDownloadURL()
+                    .then((url) => {
+                        database.ref(`shops/${shopId}/drinks/${drinkName}`).update({
+                            imageUrl: url
                         })
-                }, 5000)
+                        database.ref(`drinks/${drinkName}`).set({
+                            name: drinkName,
+                            description: drinkDesc,
+                            price: drinkPrice,
+                            imageUrl: url
+                        })
+
+                    })
+
             })
     }
 
