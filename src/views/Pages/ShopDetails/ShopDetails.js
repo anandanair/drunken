@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import firebase from 'firebase'
+import style from './style.css'
 
 const database = firebase.database()
 
