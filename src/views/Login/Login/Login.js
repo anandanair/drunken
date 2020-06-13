@@ -30,7 +30,7 @@ class Login extends Component {
 
   showRegister() {
     this.setState({
-      loginPage: false
+      loginPage: !this.state.loginPage
     })
   }
 
@@ -61,7 +61,7 @@ class Login extends Component {
             Auth.authenticate(() => {
               this.setState({ redirectToReferrer: true })
             })
-            console.log(idToken)
+            // console.log(idToken)
           })
       })
       .catch(function (error) {
@@ -137,6 +137,7 @@ class Login extends Component {
                                     <Button color="primary" href='#' id="loginBtn" onClick={this.login} className="px-4">Login</Button>
                                   </Col>
                                   <Col xs="6" className="text-right">
+                                    <Button color="link" onClick={this.showRegister} className="px-0" >Register Now</Button>
                                     <Button color="link" className="px-0" >Forgot password?</Button>
                                   </Col>
                                 </Row>
@@ -205,11 +206,14 @@ class Login extends Component {
                           </CardBody>
                           <CardFooter className="p-4">
                             <Row>
-                              <Col xs="12" sm="6">
+                              <Col xs="12" sm="4">
                                 <Button className="btn-facebook mb-1" block><span>facebook</span></Button>
                               </Col>
-                              <Col xs="12" sm="6">
+                              <Col xs="12" sm="4">
                                 <Button className="btn-twitter mb-1" block><span>twitter</span></Button>
+                              </Col>
+                              <Col xs="12" sm="4">
+                                <Button onClick={this.showRegister} className="btn-email mb-1" block><span>Log In</span></Button>
                               </Col>
                             </Row>
                           </CardFooter>

@@ -26,6 +26,15 @@ export default {
       //   variant: 'info',
       //   text: 'NEW',
       // }
+    },
+    {
+      name: 'Sign Out',
+      url: '/logout',
+      icon: 'icon-logout',
+      // badge: {
+      //   variant: 'info',
+      //   text: 'NEW',
+      // }
     }
   ],
 };

@@ -2,6 +2,21 @@ import React, { Component } from 'react';
 import { Button, Card, CardBody, CustomInput, Jumbotron, Modal, ModalBody, ModalHeader, ModalFooter, Form, FormGroup, Input, Label, CardHeader, CardDeck, CardImg, CardTitle, CardSubtitle, Collapse, Fade, CardFooter, Toast, ToastBody, ToastHeader, Badge, Col, Row, CardColumns } from 'reactstrap';
 import firebase from '../../firebase';
 
+import FadeIn from "react-fade-in";
+import Lottie from "react-lottie";
+import ReactLoading from "react-loading";
+import "bootstrap/dist/css/bootstrap.css";
+import * as drinkData from '../../loaders/drinkLoading.json';
+
+const defaultOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: drinkData.default,
+    rendererSettings: {
+        preserveAspectRatio: "xMidYMid slice"
+    }
+}
+
 const database = firebase.database()
 
 class Consumer extends Component {
@@ -25,6 +40,8 @@ class Consumer extends Component {
             currentDrink: null,
             updatePrice: null,
             updateStock: null,
+            addingDrink: false,
+            searchAdd: false
         };
 
         this.toggle = this.toggle.bind(this);
@@ -107,27 +124,41 @@ class Consumer extends Component {
     addNewDrink() {
         const { drinkName, drinkDesc, drinkPrice, fileb64String, shopId } = this.state
 
+        this.setState({ addingDrink: true })
+
         database.ref(`shops/${shopId}/drinks/${drinkName}`).set({
             name: drinkName,
             description: drinkDesc,
             price: drinkPrice
         })
+            .then(() => {
+                setTimeout(() => {
+                    this.setState(
+                        {
+                            addingDrink: false
+                        }, () => { this.toggle() });
+                }, 1000);
+            })
+
 
         firebase.storage().ref(`drinksImages/${drinkName}`).putString(fileb64String, 'data_url')
-            .then(function (snapshot) {
-                console.log(snapshot)
-                firebase.storage().ref(`drinksImages/${drinkName}`).getDownloadURL().then((url) => {
-                    database.ref(`shops/${shopId}/drinks/${drinkName}`).update({
-                        imageUrl: url
-                    })
-                    database.ref(`drinks/${drinkName}`).set({
-                        name: drinkName,
-                        description: drinkDesc,
-                        price: drinkPrice,
-                        imageUrl: url
-                    })
+            .then((snapshot) => {
+                setTimeout(() => {
+                    console.log(`${drinkName}_400x400`)
+                    firebase.storage().ref(`drinksImages/${drinkName}`).getDownloadURL()
+                        .then((url) => {
+                            database.ref(`shops/${shopId}/drinks/${drinkName}`).update({
+                                imageUrl: url
+                            })
+                            database.ref(`drinks/${drinkName}`).set({
+                                name: drinkName,
+                                description: drinkDesc,
+                                price: drinkPrice,
+                                imageUrl: url
+                            })
 
-                })
+                        })
+                }, 5000)
             })
     }
 
@@ -189,6 +220,7 @@ class Consumer extends Component {
     }
 
     addExistingDrink(name, description, price, imageUrl) {
+        this.setState({ searchAdd: true })
         var { shopId } = this.state
         database.ref(`shops/${shopId}/drinks/${name}`).set({
             name: name,
@@ -199,8 +231,15 @@ class Consumer extends Component {
         this.getDrinks((cb) => {
             this.setState({
                 drinks: cb,
-                showSearch: false,
                 allDrinks: []
+            }, () => {
+                setTimeout(() => {
+                    this.setState(
+                        {
+                            showSearch: false,
+                            searchAdd: false
+                        });
+                }, 1000);
             })
         })
 
@@ -231,17 +270,18 @@ class Consumer extends Component {
             price: updatePrice,
             stock: updateStock
         }).then(() => {
-            this.setState({
-                showUpdate: false,
-                showDrinks: false
+
+            this.getDrinks((cb) => {
+                this.setState({ showUpdate: false, drinks: cb })
             })
+
             // window.location.reload()
         })
     }
 
 
     render() {
-        const { shopDetails, showModal, shopId, loading, drinks, showDrinks, showSearch, allDrinks, showUpdate, currentDrink } = this.state
+        const { shopDetails, showModal, shopId, loading, drinks, showDrinks, showSearch, allDrinks, showUpdate, currentDrink, addingDrink, searchAdd } = this.state
         return (
             <div>
                 {!showSearch ?
@@ -298,8 +338,9 @@ class Consumer extends Component {
                                                             </Col>
                                                                 <Col>
                                                                     {drink.stock ?
-                                                                        drink.stock < 20 ? <Badge color="warning" > Stock running low </Badge>
-                                                                            : <Badge color="success">in Stock</Badge>
+                                                                        drink.stock < 20 && drink.stock > 0 ? <Badge color="warning" > Stock running low </Badge>
+                                                                            : drink.stock < 1 ? <Badge color="danger">Out of Stock</Badge>
+                                                                                : <Badge color="success">in Stock</Badge>
                                                                         : <Badge color="danger">Out of Stock</Badge>
                                                                     }
                                                                 </Col>
@@ -350,27 +391,36 @@ class Consumer extends Component {
                             <Modal isOpen={showModal} >
                                 <ModalHeader>Modal title</ModalHeader>
                                 <ModalBody>
-                                    <Form>
-                                        <FormGroup>
-                                            <Label>Drink Name</Label>
-                                            <Input onChange={this.handleChange("drinkName")} type="text"></Input>
-                                        </FormGroup>
-                                        <FormGroup>
-                                            <Label>Description</Label>
-                                            <Input onChange={this.handleChange("drinkDesc")} type="text"></Input>
-                                        </FormGroup>
-                                        <FormGroup>
-                                            <Label>Price</Label>
-                                            <Input onChange={this.handleChange("drinkPrice")} type="text"></Input>
-                                        </FormGroup>
-                                        <FormGroup>
-                                            <Label for="exampleCustomFileBrowser">Upload Image for Shop</Label>
-                                            <CustomInput accept="jpg, jpeg, png" type="file" onChange={this.handleFile} id="exampleCustomFileBrowser" name="customFile" />
-                                        </FormGroup>
-                                    </Form>
+                                    {addingDrink ?
+                                        <FadeIn>
+                                            <div class="d-flex justify-content-center align-items-center">
+
+                                                <Lottie options={defaultOptions} height="60%" width="60%" />
+
+                                            </div>
+                                        </FadeIn>
+                                        : <Form>
+                                            <FormGroup>
+                                                <Label>Drink Name</Label>
+                                                <Input onChange={this.handleChange("drinkName")} type="text"></Input>
+                                            </FormGroup>
+                                            <FormGroup>
+                                                <Label>Description</Label>
+                                                <Input onChange={this.handleChange("drinkDesc")} type="text"></Input>
+                                            </FormGroup>
+                                            <FormGroup>
+                                                <Label>Price</Label>
+                                                <Input onChange={this.handleChange("drinkPrice")} type="text"></Input>
+                                            </FormGroup>
+                                            <FormGroup>
+                                                <Label for="exampleCustomFileBrowser">Upload Image for Shop</Label>
+                                                <CustomInput accept="jpg, jpeg, png" type="file" onChange={this.handleFile} id="exampleCustomFileBrowser" name="customFile" />
+                                            </FormGroup>
+                                        </Form>
+                                    }
                                 </ModalBody>
                                 <ModalFooter>
-                                    <Button color="primary" onClick={this.addNewDrink}>Do Something</Button>{' '}
+                                    <Button color="primary" onClick={this.addNewDrink}>Add</Button>{' '}
                                     <Button color="secondary" onClick={this.toggle}>Cancel</Button>
                                 </ModalFooter>
                             </Modal>
@@ -389,28 +439,38 @@ class Consumer extends Component {
                                 </CardBody>
                             </Card>
                             <Card>
-                                <CardBody>
-                                    <CardColumns>
-                                        {allDrinks.map((drink, index) => (
-                                            <Card key={index} >
-                                                <CardHeader> {drink.name} </CardHeader>
-                                                <CardImg top width="100%" src={drink.imageUrl} alt="Card image cap" />
-                                                <CardBody>
-                                                    <Toast>
-                                                        <ToastHeader> {drink.name} </ToastHeader>
-                                                        <ToastBody>
-                                                            <CardSubtitle> {drink.description} </CardSubtitle>
-                                                            <CardSubtitle> {drink.price} </CardSubtitle>
-                                                        </ToastBody>
-                                                    </Toast>
-                                                </CardBody>
-                                                <CardFooter>
-                                                    <Button color="success" onClick={() => this.addExistingDrink(drink.name, drink.description, drink.price, drink.imageUrl)} > Add </Button>
-                                                </CardFooter>
-                                            </Card>
-                                        ))}
-                                    </CardColumns>
-                                </CardBody>
+                                {searchAdd ?
+                                    <FadeIn>
+                                        <div class="d-flex justify-content-center align-items-center">
+
+                                            <Lottie options={defaultOptions} height="60%" width="60%" />
+
+                                        </div>
+                                    </FadeIn>
+                                    :
+                                    <CardBody>
+                                        <CardColumns>
+                                            {allDrinks.map((drink, index) => (
+                                                <Card key={index} >
+                                                    <CardHeader> {drink.name} </CardHeader>
+                                                    <CardImg top width="100%" src={drink.imageUrl} alt="Card image cap" />
+                                                    <CardBody>
+                                                        <Toast>
+                                                            <ToastHeader> {drink.name} </ToastHeader>
+                                                            <ToastBody>
+                                                                <CardSubtitle> {drink.description} </CardSubtitle>
+                                                                <CardSubtitle> {drink.price} </CardSubtitle>
+                                                            </ToastBody>
+                                                        </Toast>
+                                                    </CardBody>
+                                                    <CardFooter>
+                                                        <Button color="success" onClick={() => this.addExistingDrink(drink.name, drink.description, drink.price, drink.imageUrl)} > Add </Button>
+                                                    </CardFooter>
+                                                </Card>
+                                            ))}
+                                        </CardColumns>
+                                    </CardBody>
+                                }
                             </Card>
                         </div>
                     </Fade>
