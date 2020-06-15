@@ -41,7 +41,8 @@ class Consumer extends Component {
             updatePrice: null,
             updateStock: null,
             addingDrink: false,
-            searchAdd: false
+            searchAdd: false,
+          drinkQuantity: 0,
         };
 
         this.toggle = this.toggle.bind(this);
@@ -122,14 +123,15 @@ class Consumer extends Component {
     }
 
     addNewDrink() {
-        const { drinkName, drinkDesc, drinkPrice, fileb64String, shopId } = this.state
+        const { drinkName, drinkDesc, drinkPrice, drinkQuantity, fileb64String, shopId } = this.state
 
         this.setState({ addingDrink: true })
 
         database.ref(`shops/${shopId}/drinks/${drinkName}`).set({
             name: drinkName,
             description: drinkDesc,
-            price: drinkPrice
+            price: drinkPrice,
+          quantity: drinkQuantity
         })
             .then(() => {
                 setTimeout(() => {
@@ -152,6 +154,7 @@ class Consumer extends Component {
                             name: drinkName,
                             description: drinkDesc,
                             price: drinkPrice,
+                          quantity: drinkQuantity,
                             imageUrl: url
                         })
 
@@ -406,6 +409,10 @@ class Consumer extends Component {
                                                 <Label>Description</Label>
                                                 <Input onChange={this.handleChange("drinkDesc")} type="text"></Input>
                                             </FormGroup>
+<FormGroup>
+                                                  <Label>Quantity</Label>
+<Input type="number" onChange={this.handleChange("drinkQuantity")}></Input>
+                                                  </FormGroup>
                                             <FormGroup>
                                                 <Label>Price</Label>
                                                 <Input onChange={this.handleChange("drinkPrice")} type="text"></Input>
