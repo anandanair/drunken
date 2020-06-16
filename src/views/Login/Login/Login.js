@@ -6,6 +6,7 @@ import Auth from '../../../auth';
 import DatePicker from 'react-datepicker';
 import subDays from "date-fns/subDays";
 import "react-datepicker/dist/react-datepicker.css";
+import './Login.css'
 
 import FadeIn from "react-fade-in";
 import Lottie from "react-lottie";
@@ -231,14 +232,14 @@ class Login extends Component {
             redirectToReferrer ? <Redirect to='/' />
               : loginPage ?
                 <div className="app flex-row align-items-center">
-                  <Container>
+                  <Container className="container">
                     <Row className="justify-content-center">
                       <Col md="8">
                         <CardGroup>
                           <Card className="p-4">
                             <CardBody>
                               <Form>
-                                <h1>Login</h1>
+                                <h1>Login To Drunken Master</h1>
                                 <p className="text-muted">Sign In to your account</p>
                                 <InputGroup className="mb-3">
                                   <InputGroupAddon addonType="prepend">
