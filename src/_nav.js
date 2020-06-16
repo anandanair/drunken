@@ -1,40 +1,38 @@
+let role = localStorage.getItem('role')
+
+let items = []
+
+var Dashboard = {
+  name: 'Dashboard',
+  url: '/dashboard',
+  icon: 'icon-speedometer',
+}
+
+var Administration = {
+  name: 'Administration',
+  url: '/admin',
+  icon: 'icon-setings',
+}
+
+var Consumer = {
+  name: 'Consumer',
+  url: '/consumer',
+  icon: 'icon-add',
+}
+
+if (role === "customer") {
+  items.push(Dashboard)
+}
+else if (role === "admin") {
+  items.push(Dashboard)
+  items.push(Administration)
+  items.push(Consumer)
+}
+else if (role === "consumer") {
+  items.push(Dashboard)
+  items.push(Consumer)
+}
+
 export default {
-  items: [
-    {
-      name: 'Dashboard',
-      url: '/dashboard',
-      icon: 'icon-speedometer',
-      // badge: {
-      //   variant: 'info',
-      //   text: 'NEW',
-      // }
-    },
-    {
-      name: 'Administration',
-      url: '/admin',
-      icon: 'icon-setings',
-      // badge: {
-      //   variant: 'info',
-      //   text: 'NEW',
-      // }
-    },
-    {
-      name: 'Consumer',
-      url: '/consumer',
-      icon: 'icon-add',
-      // badge: {
-      //   variant: 'info',
-      //   text: 'NEW',
-      // }
-    },
-    {
-      name: 'Sign Out',
-      url: '/logout',
-      icon: 'icon-logout',
-      // badge: {
-      //   variant: 'info',
-      //   text: 'NEW',
-      // }
-    }
-  ],
+  items: items
 };

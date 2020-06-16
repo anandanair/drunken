@@ -22,18 +22,28 @@ class Dashboard extends Component {
       searchPincode: 0,
       availableShops: [],
       invalidPin: false,
-      pinAvailable: false
+      pinAvailable: false,
+      emailVerified: false
     };
     this.getLocation = this.getLocation.bind(this)
     this.handleChange = this.handleChange.bind(this)
     this.searchPin = this.searchPin.bind(this)
   }
 
-  getUserInfo() {
-    console.log(firebase.auth().currentUser)
-  }
-
   componentDidMount() {
+    firebase.auth().onAuthStateChanged(currentUser => {
+      var role = localStorage.getItem('role')
+      if (role === "consumer") {
+        this.setState({
+          emailVerified: true
+        })
+      }
+      else {
+        this.setState({
+          emailVerified: currentUser.emailVerified
+        })
+      }
+    })
     this.getLocation()
   }
 
@@ -99,7 +109,7 @@ class Dashboard extends Component {
   }
 
   render() {
-    const { invalidPin, pinAvailable, availableShops } = this.state
+    const { invalidPin, pinAvailable, availableShops, emailVerified } = this.state
 
     var settings = {
       dots: true,
@@ -113,58 +123,63 @@ class Dashboard extends Component {
 
     return (
       <div>
+        {emailVerified ?
+          <div>
+            <Card>
+              <CardBody>
+                <Jumbotron>
+                  <FormGroup row>
+                    <Col>
+                      <Input onChange={this.handleChange("searchPincode")} placeholder="Search your postal code" type="number"></Input>
+                    </Col>
+                    <Col >
+                      <Button color="primary" onClick={this.searchPin} >Search</Button>
+                    </Col>
+                  </FormGroup>
+                  <Collapse isOpen={invalidPin}>
+                    <FormGroup>
+                      <div style={{ color: "red" }} >Postal Code cannot be find ! Please enter a valid Postal Code.</div>
+                    </FormGroup>
+                  </Collapse>
+                  <Collapse isOpen={pinAvailable}>
+                    <FormGroup>
+                      <div style={{ color: "green" }} >Delivery to this Postal Code is available !</div>
+                    </FormGroup>
+                  </Collapse>
+                </Jumbotron>
+              </CardBody>
+            </Card>
+            <Collapse isOpen={availableShops.length > 0}>
+              <Card>
+                <CardBody>
+                  <Slider {...settings} >
+                    {availableShops.map(shop => (
+                      <div>
+                        <Link to={`shops/${shop.shopId}/${shop.name}`}>
+                          <Card onClick={this.showShop} >
+                            <CardImg className="zoom" top src={shop.imageUrl} alt="Card image cap" />
+                            <CardBody>
+                              <Toast>
+                                <ToastHeader> {shop.name} </ToastHeader>
+                                <ToastBody> {shop.address} </ToastBody>
+                              </Toast>
+                            </CardBody>
+                          </Card>
+                        </Link>
+                        <div>
+                          <p>&nbsp;</p>
+                        </div>
+                      </div>
+                    ))}
+                  </Slider>
 
-        <Card>
-          <CardBody>
-            <Jumbotron>
-              <FormGroup row>
-                <Col>
-                  <Input onChange={this.handleChange("searchPincode")} placeholder="Search your postal code" type="number"></Input>
-                </Col>
-                <Col >
-                  <Button color="primary" onClick={this.searchPin} >Search</Button>
-                </Col>
-              </FormGroup>
-              <Collapse isOpen={invalidPin}>
-                <FormGroup>
-                  <div style={{ color: "red" }} >Postal Code cannot be find ! Please enter a valid Postal Code.</div>
-                </FormGroup>
-              </Collapse>
-              <Collapse isOpen={pinAvailable}>
-                <FormGroup>
-                  <div style={{ color: "green" }} >Delivery to this Postal Code is available !</div>
-                </FormGroup>
-              </Collapse>
-            </Jumbotron>
-          </CardBody>
-        </Card>
-        <Collapse isOpen={availableShops.length > 0}>
-          <Card>
-            <CardBody>
-              <Slider {...settings} >
-                {availableShops.map(shop => (
-                  <div>
-                    <Link to={`shops/${shop.shopId}/${shop.name}`}>
-                      <Card onClick={this.showShop} >
-                        <CardImg className="zoom" top src={shop.imageUrl} alt="Card image cap" />
-                        <CardBody>
-                          <Toast>
-                            <ToastHeader> {shop.name} </ToastHeader>
-                            <ToastBody> {shop.address} </ToastBody>
-                          </Toast>
-                        </CardBody>
-                      </Card>
-                    </Link>
-                    <div>
-                      <p>&nbsp;</p>
-                    </div>
-                  </div>
-                ))}
-              </Slider>
-
-            </CardBody>
-          </Card>
-        </Collapse>
+                </CardBody>
+              </Card>
+            </Collapse>
+          </div>
+          :
+          <div> Please verify your email address to Shop :) </div>
+        }
 
 
       </div>
