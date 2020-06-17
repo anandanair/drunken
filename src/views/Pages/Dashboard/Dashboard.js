@@ -68,6 +68,9 @@ class Dashboard extends Component {
   }
 
   searchPin() {
+    this.setState({
+      availableShops: []
+    })
     var { searchPincode } = this.state
     database.ref(`pinCodes/${searchPincode}`).once('value').then((snapshot) => {
       var value = snapshot.val()

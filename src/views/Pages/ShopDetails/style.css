@@ -7,3 +7,8 @@
 .opa{
     opacity:0.45;
 }
+
+.noPadding{
+    padding-left: 0px;
+    padding-right: 0px;
+}
