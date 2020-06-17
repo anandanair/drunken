@@ -72,24 +72,28 @@ class Dashboard extends Component {
     database.ref(`pinCodes/${searchPincode}`).once('value').then((snapshot) => {
       var value = snapshot.val()
       if (value) {
-        value.availableShops.map(shop => {
-          var obj = {}
-          database.ref(`shops/${shop.shopId}`).once('value', (snapshot) => {
-            var val = snapshot.val()
-            obj.name = val.name
-            obj.address = val.address
-            obj.shopId = shop.shopId
-            firebase.storage().ref(`shopCover/${shop.shopId}`).getDownloadURL().then((url) => {
-              obj.imageUrl = url
-              this.setState(state => {
-                const availableShops = this.state.availableShops.concat(obj)
-                return {
-                  availableShops
-                }
-              })
+        if (value.availableShops) {
+          value.availableShops.map(shop => {
+            var obj = {}
+            database.ref(`shops/${shop.shopId}`).once('value', (snapshot) => {
+              var val = snapshot.val()
+              if (val) {
+                obj.name = val.name
+                obj.address = val.address
+                obj.shopId = shop.shopId
+                firebase.storage().ref(`shopCover/${shop.shopId}`).getDownloadURL().then((url) => {
+                  obj.imageUrl = url
+                  this.setState(state => {
+                    const availableShops = this.state.availableShops.concat(obj)
+                    return {
+                      availableShops
+                    }
+                  })
+                })
+              }
             })
           })
-        })
+        }
         this.setState({
           invalidPin: false,
           pinAvailable: true
