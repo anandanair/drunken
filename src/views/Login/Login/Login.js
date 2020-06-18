@@ -222,7 +222,7 @@ class Login extends Component {
         {
           loading ?
             <FadeIn>
-              <div class="d-flex justify-content-center align-items-center">
+              <div className="d-flex justify-content-center align-items-center">
 
                 <Lottie options={defaultOptions} height="100%" width="100%" />
 

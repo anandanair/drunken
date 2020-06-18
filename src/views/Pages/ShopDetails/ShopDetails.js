@@ -60,6 +60,7 @@ class ShopDetails extends Component {
         uid: currentUser.uid
       })
       this.getCartDetails(currentUser.uid)
+      this.getUserAddress(currentUser.uid)
     })
     this.getDrinks(shopId, (cb) => {
       this.setState({
@@ -70,6 +71,14 @@ class ShopDetails extends Component {
       shopId: shopId
     })
     this.getShopData(shopId)
+  }
+
+  getUserAddress(uid) {
+    database.ref(`users/${uid}/address`).once('value', (snapshot) => {
+      this.setState({
+        userAddress: snapshot.val()
+      })
+    })
   }
 
   getShopData(shopId) {
@@ -191,7 +200,7 @@ class ShopDetails extends Component {
   }
 
   render() {
-    var { shopData, drinks, cart, loading, loadingCart } = this.state
+    var { shopData, drinks, cart, loading, loadingCart, userAddress } = this.state
     return (
       <div>
         {loading ?
@@ -253,7 +262,15 @@ class ShopDetails extends Component {
                         </ListGroup>
                       </div>
                     }
-
+                    {userAddress ?
+                      <div>
+                        <div>Delivery to</div>
+                        <div> {userAddress.Label} </div>
+                      </div>
+                      : <div>
+                        Please update your address before ordering !
+                      </div>
+                    }
                   </CardBody>
                   <CardFooter>
                     <Button color="primary" style={{ float: "right" }} >Buy Now</Button>
