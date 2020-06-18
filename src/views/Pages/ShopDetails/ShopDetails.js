@@ -1,8 +1,33 @@
 import React, { Component } from 'react';
 import firebase from 'firebase'
 import style from './style.css'
-import { Jumbotron, CardBody, Toast, ToastHeader, Row, Col, ToastBody, Button } from 'reactstrap';
+import { Jumbotron, CardBody, Toast, ToastHeader, Row, Col, ToastBody, Button, ListGroup, ListGroupItem, Badge } from 'reactstrap';
 import { Card, CardTitle, CardHeader, CardColumns, CardSubtitle, CardFooter, CardText, CardImg, CardImgOverlay } from 'reactstrap';
+
+import FadeIn from "react-fade-in";
+import Lottie from "react-lottie";
+import "bootstrap/dist/css/bootstrap.css";
+import * as loadData from '../../../loaders/968-loading.json';
+import * as loadData2 from '../../../loaders/8311-loading.json';
+
+const defaultOptions = {
+  loop: true,
+  autoplay: true,
+  animationData: loadData.default,
+  rendererSettings: {
+    preserveAspectRatio: "xMidYMid slice"
+  }
+}
+
+const defaultOptions2 = {
+  loop: true,
+  autoplay: true,
+  animationData: loadData2.default,
+  rendererSettings: {
+    preserveAspectRatio: "xMidYMid slice"
+  }
+}
+
 
 const database = firebase.database()
 
@@ -16,12 +41,15 @@ class ShopDetails extends Component {
       drinks: [],
       cart: [],
       uid: null,
-      loading: true
+      loading: true,
+      loadingCart: false,
+      userAddress: null
     }
     this.getShopData = this.getShopData.bind(this);
     this.getDrinks = this.getDrinks.bind(this);
     this.getCartDetails = this.getCartDetails.bind(this);
     this.addToCart = this.addToCart.bind(this);
+    this.addMore = this.addMore.bind(this);
 
   }
 
@@ -69,21 +97,33 @@ class ShopDetails extends Component {
         })
         drinksArray.push(childData)
       });
-      console.log(drinksArray)
+      // console.log(drinksArray)
       cb(drinksArray)
     })
   }
 
   getCartDetails(uid) {
-    database.ref(`cart/${uid}`).once('value', (snapshot) => {
-      snapshot.forEach((childSnapshot) => {
-        this.setState(state => {
-          const cart = this.state.cart.concat(childSnapshot.val())
-          return {
-            cart
-          }
+    this.setState({
+      cart: [],
+      loadingCart: true
+    })
+    database.ref(`cart/${uid}/${this.state.shopId}`).once('value', (snapshot) => {
+      if (snapshot.val()) {
+        snapshot.forEach((childSnapshot) => {
+          this.setState(state => {
+            const cart = this.state.cart.concat(childSnapshot.val())
+            const loadingCart = false
+            return {
+              cart, loadingCart
+            }
+          })
         })
-      })
+      }
+      else {
+        this.setState({
+          loadingCart: false
+        })
+      }
     })
   }
 
@@ -92,22 +132,77 @@ class ShopDetails extends Component {
     // var val = {}
     database.ref(`shops/${this.state.shopId}/drinks/${drinkKey}`).once('value', (snapshot) => {
       // val = snapshot.val()
-      this.setState(state => {
-        const cart = this.state.cart.concat(snapshot.val())
-        return {
-          cart
-        }
+      // this.setState(state => {
+      //   const cart = this.state.cart.concat(snapshot.val())
+      //   return {
+      //     cart
+      //   }
+      // })
+      database.ref(`cart/${this.state.uid}/${this.state.shopId}/${drinkKey}`).set(snapshot.val()).then(() => {
+        this.getCartDetails(this.state.uid)
       })
-      database.ref(`cart/${this.state.uid}/${drinkKey}`).set(snapshot.val())
     })
 
   }
 
+  addMore(drinkName, method) {
+    this.setState({ cart: [], loadingCart: true })
+    var { uid, shopId } = this.state
+    database.ref(`cart/${uid}/${shopId}/${drinkName}/amount`).once('value', (snapshot) => {
+      if (snapshot.val()) {
+        if (method === "add") {
+          database.ref(`cart/${uid}/${shopId}/${drinkName}`).update({
+            amount: snapshot.val() + 1
+          }).then(() => {
+            this.getCartDetails(uid)
+          })
+        }
+        else {
+          if (snapshot.val() === 1) {
+            database.ref(`cart/${uid}/${shopId}/${drinkName}`).remove().then(() => {
+              this.getCartDetails(uid)
+            })
+          }
+          else {
+            database.ref(`cart/${uid}/${shopId}/${drinkName}`).update({
+              amount: snapshot.val() - 1
+            }).then(() => {
+              this.getCartDetails(uid)
+            })
+          }
+        }
+      }
+      else {
+        if (method === "add") {
+          database.ref(`cart/${uid}/${shopId}/${drinkName}`).update({
+            amount: 2
+          }).then(() => {
+            this.getCartDetails(uid)
+          })
+        }
+        else {
+          database.ref(`cart/${uid}/${shopId}/${drinkName}`).remove().then(() => {
+            this.getCartDetails(uid)
+          })
+        }
+
+      }
+    })
+  }
+
   render() {
-    var { shopData, drinks, cart, loading } = this.state
+    var { shopData, drinks, cart, loading, loadingCart } = this.state
     return (
       <div>
-        {loading ? <div> Loading </div> :
+        {loading ?
+          <FadeIn>
+            <div className="d-flex justify-content-center align-items-center">
+
+              <Lottie options={defaultOptions} height="50%" width="50%" />
+
+            </div>
+          </FadeIn>
+          :
           <div>
             <Row>
               <Col lg={8} className="noPadding" >
@@ -126,12 +221,43 @@ class ShopDetails extends Component {
                 <Card>
                   <CardHeader>Cart</CardHeader>
                   <CardBody>
-                    <div>
-                      {cart.map((cart, index) => (
-                        <div key={index} > {cart.name} </div>
-                      ))}
-                    </div>
+                    {loadingCart ?
+                      <FadeIn>
+                        <div class="d-flex justify-content-center align-items-center">
+
+                          <Lottie options={defaultOptions2} height="50%" width="50%" />
+
+                        </div>
+                      </FadeIn>
+                      :
+                      <div>
+                        <ListGroup>
+                          {cart.map((cart, index) => (
+                            <ListGroupItem key={index} >
+                              <Row>
+                                <Col sm={5} >
+                                  {cart.name}
+                                </Col>
+                                <Col >
+                                  <Badge pill> {cart.amount ? cart.amount : 1} </Badge>
+                                </Col>
+                                <Col>
+                                  <Button onClick={() => { this.addMore(cart.name, "subtract") }} outline color="danger" > -</Button>
+                                </Col>
+                                <Col>
+                                  <Button onClick={() => { this.addMore(cart.name, "add") }} outline color="primary" > +</Button>
+                                </Col>
+                              </Row>
+                            </ListGroupItem>
+                          ))}
+                        </ListGroup>
+                      </div>
+                    }
+
                   </CardBody>
+                  <CardFooter>
+                    <Button color="primary" style={{ float: "right" }} >Buy Now</Button>
+                  </CardFooter>
                 </Card>
               </Col>
             </Row>
@@ -142,7 +268,7 @@ class ShopDetails extends Component {
                   <CardBody>
                     <Row>
                       {drinks.map(drink => (
-                        <Col sm={3}>
+                        <Col key={drink.childKey} sm={3}>
                           <Card key={drink.childKey}>
                             <CardHeader> {drink.name} </CardHeader>
                             <CardImg top width="100%" src={drink.imageUrl} alt="Card image cap" />

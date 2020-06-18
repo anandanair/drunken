@@ -8,6 +8,12 @@ var Dashboard = {
   icon: 'icon-speedometer',
 }
 
+var Account = {
+  name: 'Account',
+  url: '/account',
+  icon: 'icon-user',
+}
+
 var Administration = {
   name: 'Administration',
   url: '/admin',
@@ -28,17 +34,20 @@ var Signout = {
 
 if (role === "customer") {
   items.push(Dashboard)
+  items.push(Account)
   items.push(Signout)
 }
 else if (role === "admin") {
   items.push(Dashboard)
   items.push(Administration)
   items.push(Consumer)
+  items.push(Account)
   items.push(Signout)
 }
 else if (role === "consumer") {
   items.push(Dashboard)
   items.push(Consumer)
+  items.push(Account)
   items.push(Signout)
 }
 
