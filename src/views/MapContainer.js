@@ -1,12 +1,14 @@
 import React, { Component } from 'react';
 import { GoogleApiWrapper, InfoWindow, Marker } from 'google-maps-react';
 import CurrentLocation from './Map';
+import { da } from 'date-fns/locale';
 
 export class MapContainer extends Component {
   state = {
     showingInfoWindow: false,  //Hides or the shows the infoWindow
     activeMarker: {},          //Shows the active marker upon click
-    selectedPlace: {}          //Shows the infoWindow to the selected place upon a marker
+    selectedPlace: {},          //Shows the infoWindow to the selected place upon a marker
+    currentLoc: {}
   };
 
   onMarkerClick = (props, marker, e) =>
@@ -26,6 +28,9 @@ export class MapContainer extends Component {
   };
 
   sendToAccounts = data => {
+    this.setState({
+      currentLoc: data
+    })
     this.props.callbackFromMapContainer(data)
   }
 
@@ -36,7 +41,7 @@ export class MapContainer extends Component {
         google={this.props.google}
         callbackFromMap={this.sendToAccounts}
       >
-        <Marker onClick={this.onMarkerClick} name={'current location'} />
+        <Marker position={this.state.currentLoc} onClick={this.onMarkerClick} name={'Current Location'} />
         <InfoWindow
           marker={this.state.activeMarker}
           visible={this.state.showingInfoWindow}

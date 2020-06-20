@@ -264,7 +264,7 @@ class Administration extends Component {
             <div>
                 {loading
                     ? <FadeIn>
-                        <div class="d-flex justify-content-center align-items-center">
+                        <div classname="d-flex justify-content-center align-items-center">
                             {!done ?
                                 <Lottie options={defaultOptions} height="60%" width="60%" />
                                 : <Lottie options={defaultOptions2} height="60%" width="60%" />

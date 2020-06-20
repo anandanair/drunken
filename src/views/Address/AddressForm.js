@@ -29,6 +29,8 @@ class AddressForm extends Component {
             }).then((response) => {
                 const address = response.data['Response']['View'][0].Result[0].Location.Address;
                 const id = response.data['Response']['View'][0].Result[0].Location.LocationId;
+                address.Latitude = response.data['Response']['View'][0].Result[0].Location.DisplayPosition.Latitude
+                address.Longitude = response.data['Response']['View'][0].Result[0].Location.DisplayPosition.Longitude
                 this.props.sendAddress(address)
                 self.setState({
                     'address': address,

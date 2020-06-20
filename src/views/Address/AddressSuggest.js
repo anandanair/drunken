@@ -5,7 +5,7 @@ class AddressSuggest extends Component {
     render() {
         return (
             <AddressItem
-                label="Postal Code"
+                label="Search postal code"
                 value={this.props.query}
                 onChange={this.props.onChange}
                 placeholder="Please enter your postal code" />

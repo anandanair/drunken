@@ -42,7 +42,7 @@ class Consumer extends Component {
             updateStock: null,
             addingDrink: false,
             searchAdd: false,
-          drinkQuantity: 0,
+            drinkQuantity: 0,
         };
 
         this.toggle = this.toggle.bind(this);
@@ -55,6 +55,7 @@ class Consumer extends Component {
         this.deleteDrink = this.deleteDrink.bind(this);
         this.showUpdate = this.showUpdate.bind(this);
         this.updateDrink = this.updateDrink.bind(this);
+        this.updateChange = this.updateChange.bind(this);
 
 
 
@@ -131,7 +132,7 @@ class Consumer extends Component {
             name: drinkName,
             description: drinkDesc,
             price: drinkPrice,
-          quantity: drinkQuantity
+            quantity: drinkQuantity
         })
             .then(() => {
                 setTimeout(() => {
@@ -154,7 +155,7 @@ class Consumer extends Component {
                             name: drinkName,
                             description: drinkDesc,
                             price: drinkPrice,
-                          quantity: drinkQuantity,
+                            quantity: drinkQuantity,
                             imageUrl: url
                         })
 
@@ -219,6 +220,13 @@ class Consumer extends Component {
             })
         })
     }
+    updateChange = name => event => {
+        let value = event.target.value
+        this.setState(state => {
+            const currentDrink = this.state.currentDrink
+            currentDrink[name] = value
+        })
+    }
 
     addExistingDrink(name, description, price, imageUrl) {
         this.setState({ searchAdd: true })
@@ -265,11 +273,11 @@ class Consumer extends Component {
     }
 
     updateDrink() {
-        var { currentDrink, updatePrice, updateStock, shopId } = this.state
+        var { currentDrink, shopId } = this.state
         console.log(currentDrink)
-        database.ref(`shops/${shopId}/drinks/${currentDrink}`).update({
-            price: updatePrice,
-            stock: updateStock
+        database.ref(`shops/${shopId}/drinks/${currentDrink.name}`).update({
+            price: currentDrink.price,
+            stock: currentDrink.stock
         }).then(() => {
 
             this.getDrinks((cb) => {
@@ -359,7 +367,7 @@ class Consumer extends Component {
                                                             <Button onClick={() => { this.deleteDrink(drink.name) }} color="danger">Delete</Button>
                                                         </Col>
                                                         <Col>
-                                                            <Button onClick={() => { this.showUpdate(drink.name) }} color="primary">Update</Button>
+                                                            <Button onClick={() => { this.showUpdate(drink) }} color="primary">Update</Button>
                                                         </Col>
                                                     </Row>
                                                 </CardFooter>
@@ -368,33 +376,33 @@ class Consumer extends Component {
                                     </CardColumns>
                                 </Jumbotron>
                             </Collapse>
-
-                            <Modal isOpen={showUpdate}>
-                                <ModalHeader>Update Details for {currentDrink} </ModalHeader>
-                                <ModalBody>
-                                    <Form>
-                                        <FormGroup>
-                                            <Label>Price</Label>
-                                            <Input onChange={this.handleChange("updatePrice")} type="number"></Input>
-                                        </FormGroup>
-                                        <FormGroup>
-                                            <Label>Stock</Label>
-                                            <Input onChange={this.handleChange("updateStock")} type="number"></Input>
-                                        </FormGroup>
-                                    </Form>
-                                </ModalBody>
-                                <ModalFooter>
-                                    <Button onClick={this.updateDrink}>Update</Button>
-                                    <Button onClick={() => { this.showUpdate(null) }}>Close</Button>
-                                </ModalFooter>
-                            </Modal>
-
+                            {showUpdate ?
+                                <Modal isOpen={showUpdate}>
+                                    <ModalHeader>Update Details for {currentDrink.name} </ModalHeader>
+                                    <ModalBody>
+                                        <Form>
+                                            <FormGroup>
+                                                <Label>Price</Label>
+                                                <Input onChange={this.updateChange("price")} defaultValue={currentDrink.price} type="number"></Input>
+                                            </FormGroup>
+                                            <FormGroup>
+                                                <Label>Stock</Label>
+                                                <Input onChange={this.updateChange("stock")} defaultValue={currentDrink.stock} type="number"></Input>
+                                            </FormGroup>
+                                        </Form>
+                                    </ModalBody>
+                                    <ModalFooter>
+                                        <Button onClick={this.updateDrink}>Update</Button>
+                                        <Button onClick={() => { this.showUpdate(null) }}>Close</Button>
+                                    </ModalFooter>
+                                </Modal>
+                                : null}
                             <Modal isOpen={showModal} >
                                 <ModalHeader>Modal title</ModalHeader>
                                 <ModalBody>
                                     {addingDrink ?
                                         <FadeIn>
-                                            <div class="d-flex justify-content-center align-items-center">
+                                            <div className="d-flex justify-content-center align-items-center">
 
                                                 <Lottie options={defaultOptions} height="60%" width="60%" />
 
@@ -409,13 +417,13 @@ class Consumer extends Component {
                                                 <Label>Description</Label>
                                                 <Input onChange={this.handleChange("drinkDesc")} type="text"></Input>
                                             </FormGroup>
-<FormGroup>
-                                                  <Label>Quantity</Label>
-<Input type="number" onChange={this.handleChange("drinkQuantity")}></Input>
-                                                  </FormGroup>
+                                            <FormGroup>
+                                                <Label>Quantity</Label>
+                                                <Input type="number" onChange={this.handleChange("drinkQuantity")}></Input>
+                                            </FormGroup>
                                             <FormGroup>
                                                 <Label>Price</Label>
-                                                <Input onChange={this.handleChange("drinkPrice")} type="text"></Input>
+                                                <Input onChange={this.handleChange("drinkPrice")} type="number"></Input>
                                             </FormGroup>
                                             <FormGroup>
                                                 <Label for="exampleCustomFileBrowser">Upload Image for Shop</Label>
@@ -446,7 +454,7 @@ class Consumer extends Component {
                             <Card>
                                 {searchAdd ?
                                     <FadeIn>
-                                        <div class="d-flex justify-content-center align-items-center">
+                                        <div className="d-flex justify-content-center align-items-center">
 
                                             <Lottie options={defaultOptions} height="60%" width="60%" />
 
